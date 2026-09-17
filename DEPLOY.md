@@ -1,5 +1,8 @@
 # AskSage Proof Agent - Docker Deployment
 
+Current version: 1.0.0 (see VERSION). New users: read docs/NEW_USERS_GUIDE.md
+for the model download, first-run steps, and update instructions.
+
 This file documents how to run the AskSage Proof Agent (APA/ARI publication
 review dashboard) as a Docker Compose stack with the local Bonsai-1.7B engine.
 

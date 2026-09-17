@@ -1,5 +1,9 @@
 # AskSage Proof Agent - Quick Start
 
+Current version: 1.0.0 (see VERSION). New to this project? Read
+docs/NEW_USERS_GUIDE.md first - it covers the model download, engine build,
+docker commands, and updating to a newer version.
+
 Local APA 7 + ARI manuscript review agent. The proven "Pubs Review Agent v3"
 7-stage pipeline runs on the **Bonsai-1.7B** local model (deepgrove
 llama.cpp fork), with a Dash UI that shows every stage's model and prompt and

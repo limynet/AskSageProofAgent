@@ -1507,8 +1507,15 @@ def _render_cancel_bar():
     )
 
 
-def _render_pipeline_region(states, selected_stage=None):
-    """Render the whole pipeline window: strip, approval gate, detail, actions."""
+def _pipeline_region_body(states, selected_stage=None):
+    """Return the INNER children of the pipeline window (no wrapper id).
+
+    Callbacks write Output("pipeline-region", "children") with this body.
+    Nesting the id'd wrapper into its own output made every progress tick
+    embed another full region, progressively shrinking the UI (the "keeps
+    shrinking" bug). The layout mounts the wrapper once, via
+    _pipeline_region_wrapper().
+    """
     rows = _stage_rows(states)
     selected = _text(selected_stage)
 
@@ -1530,31 +1537,36 @@ def _render_pipeline_region(states, selected_stage=None):
         detail_row["detail"] = "Select a stage card to inspect it."
         detail_row["status"] = "empty"
 
+    return [
+        html.Div(
+            className="pipe-head",
+            children=[
+                html.H2("Review pipeline", className="panel-title"),
+                html.Div(
+                    "One click runs every stage on the uploaded "
+                    "manuscript with your saved prompts. Findings "
+                    "stream in as stages finish.",
+                    className="panel-note",
+                ),
+            ],
+        ),
+        html.Div(
+            className="pipe-strip",
+            role="group",
+            **{"aria-label": "Review pipeline stages"},
+            children=cards,
+        ),
+        _render_cancel_bar(),
+        _render_stage_detail(detail_row, states),
+    ]
+
+
+def _pipeline_region_wrapper(states, selected_stage=None):
+    """Render the whole pipeline window with its id wrapper (layout only)."""
     return html.Div(
         id="pipeline-region",
         className="pipeline-window",
-        children=[
-            html.Div(
-                className="pipe-head",
-                children=[
-                    html.H2("Review pipeline", className="panel-title"),
-                    html.Div(
-                        "One click runs every stage on the uploaded "
-                        "manuscript with your saved prompts. Findings "
-                        "stream in as stages finish.",
-                        className="panel-note",
-                    ),
-                ],
-            ),
-            html.Div(
-                className="pipe-strip",
-                role="group",
-                **{"aria-label": "Review pipeline stages"},
-                children=cards,
-            ),
-            _render_cancel_bar(),
-            _render_stage_detail(detail_row, states),
-        ],
+        children=_pipeline_region_body(states, selected_stage),
     )
 
 
@@ -2078,7 +2090,7 @@ def build_layout():
             # strip; the strip stays in the DOM underneath as list mode.
             # Pipeline strip. Sits between the brand bar and the two-column
             # grid so the whole seven-stage flow is visible at a glance.
-            _render_pipeline_region(None, None),
+            _pipeline_region_wrapper(None, None),
             html.Main(
                 className="page",
                 children=[
@@ -2283,7 +2295,7 @@ def run_review(n_clicks, options, document, states, provider):
         if not text.strip():
             return (
                 no_update,
-                _render_pipeline_region(states, None),
+                _pipeline_region_body(states, None),
                 no_update,
                 _alert(
                     "No manuscript loaded",
@@ -2309,7 +2321,7 @@ def run_review(n_clicks, options, document, states, provider):
         if client is None:
             return (
                 no_update,
-                _render_pipeline_region(states, None),
+                _pipeline_region_body(states, None),
                 no_update,
                 _alert(
                     "Engine unavailable",
@@ -2324,7 +2336,7 @@ def run_review(n_clicks, options, document, states, provider):
         except ImportError as exc:
             return (
                 no_update,
-                _render_pipeline_region(states, None),
+                _pipeline_region_body(states, None),
                 no_update,
                 _alert(
                     "Runner unavailable",
@@ -2366,7 +2378,7 @@ def run_review(n_clicks, options, document, states, provider):
 
         return (
             snapshot,
-            _render_pipeline_region(snapshot, None),
+            _pipeline_region_body(snapshot, None),
             False,
             [],
             hidden,
@@ -2375,7 +2387,7 @@ def run_review(n_clicks, options, document, states, provider):
         _log("run_review failed: %s" % traceback.format_exc().splitlines()[-1])
         return (
             no_update,
-            _render_pipeline_region(states, None),
+            _pipeline_region_body(states, None),
             no_update,
             _alert(
                 "Review failed",
@@ -2785,7 +2797,7 @@ def show_prompt_loading(n_clicks, connection):
 
 def _pipeline_outputs(states, selected=None):
     """Return the (store-pipeline, pipeline-region) pair for a snapshot."""
-    return states, _render_pipeline_region(states, selected)
+    return states, _pipeline_region_body(states, selected)
 
 
 def _finding_key(finding):
@@ -2967,7 +2979,7 @@ def pipeline_after_upload(document):
 
         return (
             snapshot,
-            _render_pipeline_region(snapshot, None),
+            _pipeline_region_body(snapshot, None),
             findings,
             _findings_view(findings, "all"),
             _findings_count_label(findings),
@@ -2978,7 +2990,7 @@ def pipeline_after_upload(document):
         _log("pipeline_after_upload failed: %s" % traceback.format_exc().splitlines()[-1])
         return (
             no_update,
-            _render_pipeline_region(None, None),
+            _pipeline_region_body(None, None),
             no_update,
             no_update,
             no_update,
@@ -3016,7 +3028,7 @@ def run_selected_agents(n_clicks, selected, document, states, provider):
         if not text.strip():
             return (
                 no_update,
-                _render_pipeline_region(states, None),
+                _pipeline_region_body(states, None),
                 no_update,
                 no_update,
                 _alert(
@@ -3034,7 +3046,7 @@ def run_selected_agents(n_clicks, selected, document, states, provider):
         if not selected_stages:
             return (
                 no_update,
-                _render_pipeline_region(states, None),
+                _pipeline_region_body(states, None),
                 no_update,
                 no_update,
                 _alert(
@@ -3050,7 +3062,7 @@ def run_selected_agents(n_clicks, selected, document, states, provider):
         if client is None:
             return (
                 no_update,
-                _render_pipeline_region(states, None),
+                _pipeline_region_body(states, None),
                 no_update,
                 no_update,
                 _alert(
@@ -3064,7 +3076,7 @@ def run_selected_agents(n_clicks, selected, document, states, provider):
         if state is None:
             return (
                 no_update,
-                _render_pipeline_region(states, None),
+                _pipeline_region_body(states, None),
                 no_update,
                 no_update,
                 _alert(
@@ -3079,7 +3091,7 @@ def run_selected_agents(n_clicks, selected, document, states, provider):
         except ImportError as exc:
             return (
                 no_update,
-                _render_pipeline_region(states, None),
+                _pipeline_region_body(states, None),
                 no_update,
                 no_update,
                 _alert(
@@ -3112,7 +3124,7 @@ def run_selected_agents(n_clicks, selected, document, states, provider):
         snapshot = state.to_dict()
         return (
             snapshot,
-            _render_pipeline_region(snapshot, None),
+            _pipeline_region_body(snapshot, None),
             False,
             "Running %d stage(s) on the local model." % len(selected_stages),
             [],
@@ -3121,7 +3133,7 @@ def run_selected_agents(n_clicks, selected, document, states, provider):
         _log("run_selected_agents failed: %s" % traceback.format_exc().splitlines()[-1])
         return (
             no_update,
-            _render_pipeline_region(states, None),
+            _pipeline_region_body(states, None),
             no_update,
             no_update,
             _alert(
@@ -3152,7 +3164,7 @@ def cancel_agents(n_clicks, states):
         if run is None:
             return (
                 no_update,
-                _render_pipeline_region(states, None),
+                _pipeline_region_body(states, None),
                 no_update,
             )
 
@@ -3162,14 +3174,14 @@ def cancel_agents(n_clicks, states):
         snapshot = run.pipeline.to_dict() if run.pipeline is not None else states
         return (
             snapshot,
-            _render_pipeline_region(snapshot, None),
+            _pipeline_region_body(snapshot, None),
             False,
         )
     except Exception as exc:  # noqa: BLE001 - never raise out of a callback
         _log("cancel_agents failed: %s" % traceback.format_exc().splitlines()[-1])
         return (
             no_update,
-            _render_pipeline_region(states, None),
+            _pipeline_region_body(states, None),
             no_update,
         )
 
@@ -3210,7 +3222,7 @@ def rerun_agent(clicks, document, states, provider):
         if not text.strip():
             return (
                 no_update,
-                _render_pipeline_region(states, None),
+                _pipeline_region_body(states, None),
                 no_update,
                 _alert(
                     "No manuscript loaded",
@@ -3222,7 +3234,7 @@ def rerun_agent(clicks, document, states, provider):
         if _ACTIVE_RUN is not None and _ACTIVE_RUN.is_running():
             return (
                 no_update,
-                _render_pipeline_region(states, None),
+                _pipeline_region_body(states, None),
                 no_update,
                 _alert(
                     "A run is already in flight",
@@ -3237,7 +3249,7 @@ def rerun_agent(clicks, document, states, provider):
         if client is None:
             return (
                 no_update,
-                _render_pipeline_region(states, None),
+                _pipeline_region_body(states, None),
                 no_update,
                 _alert(
                     "Engine unavailable",
@@ -3255,7 +3267,7 @@ def rerun_agent(clicks, document, states, provider):
         except ImportError as exc:
             return (
                 no_update,
-                _render_pipeline_region(states, None),
+                _pipeline_region_body(states, None),
                 no_update,
                 _alert(
                     "Runner unavailable",
@@ -3288,7 +3300,7 @@ def rerun_agent(clicks, document, states, provider):
         snapshot = state.to_dict()
         return (
             snapshot,
-            _render_pipeline_region(snapshot, None),
+            _pipeline_region_body(snapshot, None),
             False,
             [],
         )
@@ -3296,7 +3308,7 @@ def rerun_agent(clicks, document, states, provider):
         _log("rerun_agent failed: %s" % traceback.format_exc().splitlines()[-1])
         return (
             no_update,
-            _render_pipeline_region(states, None),
+            _pipeline_region_body(states, None),
             no_update,
             _alert(
                 "Re-run failed to start",
@@ -3354,7 +3366,7 @@ def pip_progress_tick(n_intervals, document, states, findings, provider):
         if running:
             return (
                 snapshot,
-                _render_pipeline_region(snapshot, None),
+                _pipeline_region_body(snapshot, None),
                 False,
                 merged,
                 _findings_view(merged, "all"),
@@ -3375,7 +3387,7 @@ def pip_progress_tick(n_intervals, document, states, findings, provider):
 
         return (
             snapshot,
-            _render_pipeline_region(snapshot, None),
+            _pipeline_region_body(snapshot, None),
             True,
             merged,
             _findings_view(merged, "all"),

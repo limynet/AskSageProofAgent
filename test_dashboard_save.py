@@ -65,6 +65,25 @@ class TestStageDetailNoSelfNesting(unittest.TestCase):
         self.assertNotIn("stage-detail", ids)
 
 
+class TestPipelineRegionNoSelfNesting(unittest.TestCase):
+    """Regression: progress ticks must not nest the pipeline region into
+    itself. _pipeline_region_body(...) feeds Output("pipeline-region",
+    "children"); if it carried id="pipeline-region", every tick embedded
+    another full region and the UI progressively shrank."""
+
+    def test_body_has_no_pipeline_region_id(self):
+        body = dashboard._pipeline_region_body(None, None)
+        self.assertTrue(body, "region body must render content")
+        for cid in _walk_ids_list(body):
+            self.assertNotEqual(cid, "pipeline-region")
+
+    def test_wrapper_is_the_only_id_bearing_element(self):
+        wrapper = dashboard._pipeline_region_wrapper(None, None)
+        self.assertEqual(wrapper.id, "pipeline-region")
+        inner_ids = list(_walk_ids_list(wrapper.children))
+        self.assertNotIn("pipeline-region", inner_ids)
+
+
 class TestReferenceUploadSave(unittest.TestCase):
     """Regression: uploading a reference manual stores it under
     data/reference/ with the registry's base name and any supported ext."""
