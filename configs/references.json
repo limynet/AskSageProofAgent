@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "documents": [
+    {
+      "key": "ari_manual",
+      "title": "ARI Internal Publication Manual",
+      "file": "data/reference/ari_publication_manual.txt",
+      "loaded": false
+    },
+    {
+      "key": "army_ar_rag",
+      "title": "Army AR / Army Publication Record (RAG)",
+      "file": "data/reference/army_ar_rag.txt",
+      "loaded": false
+    },
+    {
+      "key": "dtic_regs",
+      "title": "DTIC Publication Regulations",
+      "file": "data/reference/dtic_regs.txt",
+      "loaded": false
+    }
+  ]
+}

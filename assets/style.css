@@ -1,0 +1,1648 @@
+/* ==========================================================================
+   AskSage Proof Agent - Design System
+   Single stylesheet for the Dash frontend.
+
+   Rules enforced in this file:
+   - One accent color (--accent). No other hue is used for emphasis.
+   - One corner radius (--radius, 8px). The only exception is the status pill,
+     which is a pill component and therefore uses 999px (documented inline).
+   - No gradients. No decorative animation. Only hover/focus/active
+     transitions, capped at 150ms ease-out.
+   - No pure-black shadows. Elevation uses --shadow-card only.
+   - All text meets WCAG AA contrast against its own background.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Self-hosted webfonts.
+
+   Only files that were actually downloaded to assets/fonts/ are declared.
+   The system fallback stack (Georgia / Segoe UI) is fully specified in the
+   font stacks below, so the layout and hierarchy hold with zero webfonts.
+   -------------------------------------------------------------------------- */
+
+@font-face {
+    font-family: "Source Serif 4";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url("fonts/source-serif-4-400-latin.woff2") format("woff2");
+}
+
+@font-face {
+    font-family: "Source Serif 4";
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url("fonts/source-serif-4-600-latin.woff2") format("woff2");
+}
+
+@font-face {
+    font-family: "Public Sans";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url("fonts/public-sans-400-latin.woff2") format("woff2");
+}
+
+@font-face {
+    font-family: "Public Sans";
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url("fonts/public-sans-500-latin.woff2") format("woff2");
+}
+
+@font-face {
+    font-family: "Public Sans";
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url("fonts/public-sans-600-latin.woff2") format("woff2");
+}
+
+/* --------------------------------------------------------------------------
+   Design tokens
+   -------------------------------------------------------------------------- */
+
+:root {
+    /* Color */
+    --paper: #F7F5F0;
+    --surface: #FFFFFF;
+    --ink: #1C2431;
+    --ink-muted: #5A6472;
+    --hairline: #E4E0D6;
+    --accent: #24598C;
+    --accent-dark: #1B4468;
+    --ok: #3E7C59;
+    /* Warning color. Darkened from the original #A8742A so that the
+       warning severity tag meets WCAG AA (4.5:1) as small text:
+       4.98:1 on --surface, 4.57:1 on --paper. */
+    --warn: #96661F;
+    --err: #A04040;
+
+    /* Shape */
+    --radius: 8px;
+
+    /* Elevation */
+    --shadow-card: 0 1px 2px rgba(28, 36, 49, .06);
+
+    /* Type */
+    --font-serif: "Source Serif 4", Georgia, serif;
+    --font-sans: "Public Sans", -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "Consolas", "SFMono-Regular", "Menlo", monospace;
+
+    /* Motion - short, ease-out, interaction feedback only */
+    --t-fast: 120ms ease-out;
+    --t-base: 150ms ease-out;
+}
+
+/* --------------------------------------------------------------------------
+   Reset and page shell
+   -------------------------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Dash injects a few wrappers; keep them out of the layout math. */
+#react-entry-point,
+#_dash-app-content {
+    display: block;
+}
+
+/* --------------------------------------------------------------------------
+   Focus visibility - single accent-colored ring, never removed
+   -------------------------------------------------------------------------- */
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   Zone 1 - Brand bar
+   -------------------------------------------------------------------------- */
+
+.brandbar {
+    height: 64px;
+    background: var(--paper);
+    border-bottom: 1px solid var(--hairline);
+    display: flex;
+    align-items: center;
+}
+
+.brandbar-inner {
+    width: 100%;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.brand-lockup {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+}
+
+.brand-wordmark {
+    font-family: var(--font-serif);
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--ink);
+    letter-spacing: 0.005em;
+}
+
+.brand-tagline {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    line-height: 1.3;
+    color: var(--ink-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Status pill.
+   Radius exception: this is a pill component, so it uses 999px rather than
+   --radius. It is the only place in the stylesheet allowed to do so. */
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+    flex: 0 0 auto;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--ink-muted);
+    flex: 0 0 auto;
+}
+
+/* Untested */
+.status-pill.is-untested .status-dot {
+    background: var(--ink-muted);
+}
+
+.status-pill.is-untested .status-text {
+    color: var(--ink-muted);
+}
+
+/* Connected */
+.status-pill.is-connected .status-dot {
+    background: var(--ok);
+}
+
+.status-pill.is-connected .status-text {
+    color: var(--ink);
+}
+
+/* Offline */
+.status-pill.is-offline .status-dot {
+    background: var(--err);
+}
+
+.status-pill.is-offline .status-text {
+    color: var(--err);
+}
+
+/* --------------------------------------------------------------------------
+   Page grid - two columns 2fr / 1fr, single column below 900px
+   -------------------------------------------------------------------------- */
+
+.page {
+    width: 100%;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+.layout-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 24px;
+    align-items: start;
+}
+
+.col-left,
+.col-right {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    min-width: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Panel - hairline grouping, no elevation. Cards are reserved for findings,
+   response text, and the error alert, where elevation conveys real hierarchy.
+   -------------------------------------------------------------------------- */
+
+.panel {
+    background: transparent;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    padding: 20px;
+}
+
+.panel-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.panel-title {
+    font-family: var(--font-serif);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 0;
+    /* Uppercase micro-heading treatment. Used at most twice on the page. */
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.panel-note {
+    font-size: 12px;
+    color: var(--ink-muted);
+}
+
+.panel-section {
+    margin-top: 20px;
+}
+
+/* --------------------------------------------------------------------------
+   Zone 2 / Panel A - Manuscript
+   -------------------------------------------------------------------------- */
+
+.dropzone {
+    display: block;
+    border: 1px dashed var(--hairline);
+    border-radius: var(--radius);
+    padding: 8px;
+    background: var(--surface);
+    cursor: pointer;
+    transition: border-color var(--t-base), background-color var(--t-base);
+}
+
+.dropzone:hover,
+.dropzone.is-dragging {
+    border-color: var(--accent);
+}
+
+.dropzone-inner {
+    padding: 22px 16px;
+    text-align: center;
+}
+
+.dropzone-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
+}
+
+.dropzone-sub {
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--ink-muted);
+}
+
+.dropzone-filename {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--accent);
+    word-break: break-all;
+}
+
+/* Document overview metrics */
+
+.metric-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.metric-block {
+    min-width: 0;
+}
+
+.metric-value {
+    font-family: var(--font-sans);
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.25;
+    word-break: break-word;
+}
+
+.metric-label {
+    margin-top: 2px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-muted);
+}
+
+/* Full-text preview */
+
+.preview {
+    margin-top: 20px;
+    max-height: 480px;
+    overflow-y: auto;
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    padding: 20px;
+}
+
+.preview-text {
+    font-family: var(--font-serif);
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--ink);
+    max-width: 68ch;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    margin: 0;
+}
+
+.preview-empty {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--ink-muted);
+    text-align: center;
+    padding: 28px 0;
+}
+
+/* --------------------------------------------------------------------------
+   Zone 2 / Panel B - Review
+   -------------------------------------------------------------------------- */
+
+.checklist-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 18px;
+}
+
+/* dcc.Checklist renders one label per option. */
+.checklist-row label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--ink);
+    cursor: pointer;
+    transition: color var(--t-fast);
+}
+
+.checklist-row input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    margin: 0;
+    accent-color: var(--accent);
+    cursor: pointer;
+    flex: 0 0 auto;
+}
+
+.checklist-row label:hover {
+    color: var(--accent);
+}
+
+/* Buttons */
+
+.btn {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.2;
+    border-radius: var(--radius);
+    border: 1px solid transparent;
+    cursor: pointer;
+    white-space: nowrap;
+    /* Touch target floor: every button is at least 44px tall so it meets
+       the minimum target size guidance on touch devices. */
+    min-height: 44px;
+    transition: background-color var(--t-base), border-color var(--t-base),
+        color var(--t-base), transform var(--t-fast);
+}
+
+.btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #FFFFFF;
+    padding: 10px 18px;
+}
+
+.btn-primary:hover {
+    background: var(--accent-dark);
+    border-color: var(--accent-dark);
+}
+
+.btn-primary:active {
+    transform: translateY(1px);
+}
+
+.btn-primary:disabled,
+.btn-primary[disabled] {
+    background: var(--hairline);
+    border-color: var(--hairline);
+    color: var(--ink-muted);
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-secondary {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 9px 16px;
+}
+
+.btn-secondary:hover {
+    background: var(--accent);
+    color: #FFFFFF;
+}
+
+.btn-secondary:active {
+    transform: translateY(1px);
+}
+
+.btn-secondary:disabled,
+.btn-secondary[disabled] {
+    border-color: var(--hairline);
+    color: var(--ink-muted);
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-secondary:disabled:hover {
+    background: transparent;
+    color: var(--ink-muted);
+}
+
+.btn-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-top: 4px;
+}
+
+/* Findings board */
+
+.board {
+    margin-top: 20px;
+}
+
+.filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.chip {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1;
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    color: var(--ink-muted);
+    border-radius: 999px;
+    padding: 7px 14px;
+    cursor: pointer;
+    /* Touch target floor, same rule as .btn. */
+    min-height: 44px;
+    transition: background-color var(--t-fast), color var(--t-fast),
+        border-color var(--t-fast);
+}
+
+.chip:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.chip.is-active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #FFFFFF;
+}
+
+.chip.is-active:hover {
+    color: #FFFFFF;
+}
+
+.findings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.finding-card {
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow-card);
+}
+
+.finding-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.severity-tag {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    line-height: 1.4;
+}
+
+.severity-tag.is-error {
+    color: var(--err);
+}
+
+.severity-tag.is-warning {
+    color: var(--warn);
+}
+
+.severity-tag.is-info {
+    color: var(--ink-muted);
+}
+
+.finding-agent {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.finding-location {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--ink-muted);
+    white-space: nowrap;
+}
+
+/* Provenance tag: where a finding came from. Rule findings are produced by
+   the deterministic checks; agent findings name the persona and the model. */
+.provenance-tag {
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--ink-muted);
+    background: var(--paper);
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    padding: 2px 9px;
+    white-space: nowrap;
+}
+
+.finding-excerpt {
+    margin-top: 10px;
+    background: var(--paper);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 10px 12px;
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--ink);
+}
+
+.finding-line {
+    margin-top: 10px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--ink);
+}
+
+.finding-line-label {
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.finding-line.is-fix {
+    color: var(--ink-muted);
+}
+
+.finding-line.is-fix .finding-line-label {
+    color: var(--ink-muted);
+}
+
+.finding-source {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--ink-muted);
+}
+
+.board-empty {
+    font-size: 13px;
+    color: var(--ink-muted);
+    padding: 8px 0;
+}
+
+/* --------------------------------------------------------------------------
+   Zone 3 / Panel C - Engine
+   -------------------------------------------------------------------------- */
+
+.field-label {
+    display: block;
+    font-size: 12px;
+    color: var(--ink-muted);
+    margin-bottom: 6px;
+}
+
+/* Segmented control - two buttons in one hairline container */
+.segmented {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--surface);
+}
+
+.segmented-btn {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    background: var(--surface);
+    color: var(--ink);
+    border: 0;
+    border-radius: 0;
+    padding: 10px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color var(--t-fast), color var(--t-fast);
+}
+
+.segmented-btn + .segmented-btn {
+    border-left: 1px solid var(--hairline);
+}
+
+.segmented-btn:hover {
+    color: var(--accent);
+}
+
+.segmented-btn.is-active {
+    background: var(--accent);
+    color: #FFFFFF;
+}
+
+.segmented-btn.is-active:hover {
+    color: #FFFFFF;
+}
+
+/* Key-value list - replaces raw JSON dumps */
+.kv-list {
+    margin-top: 18px;
+    border-top: 1px solid var(--hairline);
+}
+
+.kv-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--hairline);
+}
+
+.kv-key {
+    font-size: 12px;
+    color: var(--ink-muted);
+    flex: 0 0 auto;
+}
+
+.kv-value {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--ink);
+    text-align: right;
+    word-break: break-all;
+    min-width: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Zone 3 / Panel D - Playground
+   -------------------------------------------------------------------------- */
+
+.prompt-input {
+    width: 100%;
+    min-height: 90px;
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    padding: 12px;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--ink);
+    resize: vertical;
+    transition: border-color var(--t-base);
+}
+
+.prompt-input::placeholder {
+    color: var(--ink-muted);
+}
+
+.prompt-input:hover {
+    border-color: var(--accent);
+}
+
+.prompt-input:focus {
+    border-color: var(--accent);
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
+
+.hint {
+    font-size: 12px;
+    color: var(--ink-muted);
+    margin-top: 10px;
+}
+
+.response-card {
+    margin-top: 16px;
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow-card);
+}
+
+.response-badge {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-muted);
+}
+
+.response-text {
+    margin-top: 8px;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--ink);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* --------------------------------------------------------------------------
+   Inline error alert - never a modal, never alert()
+   -------------------------------------------------------------------------- */
+
+.alert {
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-left: 4px solid var(--err);
+    border-radius: var(--radius);
+    padding: 12px;
+    margin-top: 16px;
+}
+
+.alert-heading {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--err);
+    line-height: 1.4;
+}
+
+.alert-body {
+    margin-top: 4px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--ink);
+}
+
+.alert-next {
+    margin-top: 4px;
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--ink-muted);
+}
+
+/* --------------------------------------------------------------------------
+   Loading skeletons - shape-matched placeholder bars with a shimmer band.
+   Reduced motion turns the shimmer into a static block.
+   -------------------------------------------------------------------------- */
+
+.skeleton-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.skeleton {
+    position: relative;
+    overflow: hidden;
+    background: var(--hairline);
+    border-radius: var(--radius);
+    height: 12px;
+}
+
+.skeleton.is-title {
+    height: 18px;
+    width: 40%;
+}
+
+.skeleton.is-short {
+    width: 55%;
+}
+
+.skeleton.is-medium {
+    width: 78%;
+}
+
+.skeleton.is-full {
+    width: 100%;
+}
+
+.skeleton.is-metric {
+    height: 34px;
+    width: 100%;
+}
+
+.skeleton.is-block {
+    height: 96px;
+    width: 100%;
+}
+
+.skeleton::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 40%;
+    height: 100%;
+    background: rgba(255, 255, 255, .62);
+    animation: skeleton-sweep 1.4s linear infinite;
+}
+
+@keyframes skeleton-sweep {
+    0% {
+        transform: translateX(-100%);
+    }
+
+    100% {
+        transform: translateX(250%);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .skeleton::after {
+        animation: none;
+        transform: none;
+        width: 100%;
+        background: rgba(255, 255, 255, .38);
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Zone 4 - Footer
+   -------------------------------------------------------------------------- */
+
+.footer {
+    border-top: 1px solid var(--hairline);
+    margin-top: 24px;
+}
+
+.footer-inner {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 24px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--ink-muted);
+}
+
+/* --------------------------------------------------------------------------
+   Pipeline window - the seven stage cards between the brand bar and the grid.
+
+   The strip is a numbered flow: each card is a hairline box on --surface and
+   the cards are joined by a short --hairline connector. Status is carried by
+   the badge dot and the badge word only, using the existing --ok / --warn /
+   --err / --accent / --ink-muted tokens. No new colors, no gradients.
+   -------------------------------------------------------------------------- */
+
+.pipeline-window {
+    width: 100%;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 20px 24px 0;
+}
+
+.pipe-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.pipe-strip {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+/* The connector line between two cards. It grows to fill the free space so
+   the seven cards read as one continuous flow. */
+.pipe-connector {
+    flex: 1 1 12px;
+    min-width: 12px;
+    align-self: center;
+    height: 1px;
+    background: var(--hairline);
+}
+
+.pipe-card {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 140px;
+    max-width: 176px;
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    transition: border-color var(--t-fast), background-color var(--t-fast);
+}
+
+.pipe-card.is-selected {
+    border-color: var(--accent);
+}
+
+.pipe-card-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    width: 100%;
+    background: transparent;
+    border: 0;
+    border-radius: var(--radius);
+    padding: 0;
+    margin: 0;
+    font-family: var(--font-sans);
+    text-align: left;
+    cursor: pointer;
+}
+
+.pipe-label {
+    font-family: var(--font-serif);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.3;
+}
+
+/* Status badge. Pill component, so 999px is allowed here as it is for the
+   brand-bar status pill. */
+.pipe-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.5;
+    white-space: nowrap;
+}
+
+.pipe-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--ink-muted);
+    flex: 0 0 auto;
+}
+
+.pipe-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.pipe-count {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.pipe-detail {
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--ink-muted);
+    word-break: break-word;
+}
+
+/* Re-run control, offered once a stage has stopped. */
+.pipe-rerun {
+    align-self: flex-start;
+    min-height: 44px;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 600;
+    background: transparent;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    color: var(--accent);
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: background-color var(--t-fast), color var(--t-fast);
+}
+
+.pipe-rerun:hover {
+    background: var(--accent);
+    color: #FFFFFF;
+}
+
+/* Status variants. Only the dot and the badge word take a color. */
+.pipe-card.is-pending .pipe-dot,
+.pipe-badge.is-pending .pipe-dot,
+.ledger-badge.is-pending .pipe-dot {
+    background: var(--ink-muted);
+}
+
+.pipe-card.is-pending .pipe-status,
+.pipe-badge.is-pending .pipe-status,
+.ledger-badge.is-pending .pipe-status {
+    color: var(--ink-muted);
+}
+
+.pipe-card.is-running .pipe-dot,
+.pipe-badge.is-running .pipe-dot,
+.ledger-badge.is-running .pipe-dot {
+    background: var(--accent);
+}
+
+.pipe-card.is-running {
+    border-color: var(--accent);
+}
+
+.pipe-card.is-running .pipe-status,
+.pipe-badge.is-running .pipe-status,
+.ledger-badge.is-running .pipe-status {
+    color: var(--accent);
+}
+
+.pipe-card.is-done .pipe-dot,
+.pipe-badge.is-done .pipe-dot,
+.ledger-badge.is-done .pipe-dot {
+    background: var(--ok);
+}
+
+.pipe-card.is-done .pipe-status,
+.pipe-badge.is-done .pipe-status,
+.ledger-badge.is-done .pipe-status {
+    color: var(--ok);
+}
+
+.pipe-card.is-skipped .pipe-dot,
+.pipe-badge.is-skipped .pipe-dot,
+.ledger-badge.is-skipped .pipe-dot {
+    background: var(--ink-muted);
+}
+
+.pipe-card.is-skipped .pipe-status,
+.pipe-badge.is-skipped .pipe-status,
+.ledger-badge.is-skipped .pipe-status {
+    color: var(--ink-muted);
+}
+
+.pipe-card.is-failed .pipe-dot,
+.pipe-badge.is-failed .pipe-dot,
+.ledger-badge.is-failed .pipe-dot {
+    background: var(--err);
+}
+
+.pipe-card.is-failed .pipe-status,
+.pipe-badge.is-failed .pipe-status,
+.ledger-badge.is-failed .pipe-status {
+    color: var(--err);
+}
+
+.pipe-card.is-cancelled .pipe-dot,
+.pipe-badge.is-cancelled .pipe-dot,
+.ledger-badge.is-cancelled .pipe-dot {
+    background: var(--warn);
+}
+
+.pipe-card.is-cancelled .pipe-status,
+.pipe-badge.is-cancelled .pipe-status,
+.ledger-badge.is-cancelled .pipe-status {
+    color: var(--warn);
+}
+
+.pipe-card.is-awaiting_approval .pipe-dot,
+.pipe-badge.is-awaiting_approval .pipe-dot {
+    background: var(--warn);
+}
+
+.pipe-card.is-awaiting_approval {
+    border-color: var(--warn);
+}
+
+.pipe-card.is-awaiting_approval .pipe-status,
+.pipe-badge.is-awaiting_approval .pipe-status {
+    color: var(--warn);
+}
+
+/* --------------------------------------------------------------------------
+   Approval gate - the human decision that unlocks the three agent passes.
+   -------------------------------------------------------------------------- */
+
+.pipe-approval {
+    margin-top: 16px;
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-left: 4px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+}
+
+.pipe-approval.is-hidden,
+.pipe-actionbar.is-hidden {
+    display: none;
+}
+
+.pipe-approval-head {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 10px;
+}
+
+.pipe-approval-title {
+    font-family: var(--font-serif);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.pipe-approval-note {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--ink-muted);
+}
+
+/* dcc.Checklist renders one label per option. */
+.pipe-toggles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.pipe-toggles label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--ink);
+    cursor: pointer;
+    transition: color var(--t-fast);
+}
+
+.pipe-toggles label:hover {
+    color: var(--accent);
+}
+
+.pipe-toggles input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    margin: 0;
+    accent-color: var(--accent);
+    cursor: pointer;
+    flex: 0 0 auto;
+}
+
+.pipe-estimate {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--ink-muted);
+}
+
+/* --------------------------------------------------------------------------
+   Cancel bar - shown only while an agent run is in flight.
+   -------------------------------------------------------------------------- */
+
+.pipe-actionbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.pipe-actionbar-note {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--ink-muted);
+}
+
+/* --------------------------------------------------------------------------
+   Stage detail - the inspector under the strip.
+   -------------------------------------------------------------------------- */
+
+.stage-detail {
+    margin-top: 16px;
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+}
+
+.stage-detail-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.stage-detail-title {
+    font-family: var(--font-serif);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.stage-detail-note {
+    font-size: 12px;
+    color: var(--ink-muted);
+}
+
+.stage-detail .kv-list {
+    margin-top: 0;
+    border-top: 1px solid var(--hairline);
+}
+
+/* --------------------------------------------------------------------------
+   Run ledger - one row per stage execution, newest first.
+   -------------------------------------------------------------------------- */
+
+.ledger-fold > summary {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    cursor: pointer;
+    list-style: none;
+}
+
+.ledger-fold > summary::-webkit-details-marker {
+    display: none;
+}
+
+.ledger-body {
+    margin-top: 14px;
+}
+
+.ledger-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ledger-item {
+    border-top: 1px solid var(--hairline);
+    padding-top: 10px;
+}
+
+.ledger-item:first-child {
+    border-top: 0;
+    padding-top: 0;
+}
+
+.ledger-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.ledger-stage {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.ledger-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.5;
+    white-space: nowrap;
+    color: var(--ink-muted);
+}
+
+.ledger-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 4px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-muted);
+}
+
+.ledger-detail {
+    margin-top: 4px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--ink-muted);
+    word-break: break-word;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive - single column below 900px
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 900px) {
+    .layout-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* The strip wraps to two rows instead of scrolling sideways. */
+    .pipe-strip {
+        flex-wrap: wrap;
+    }
+
+    .pipe-connector {
+        display: none;
+    }
+
+    .pipe-card {
+        flex: 1 1 30%;
+        min-width: 0;
+    }
+
+    .brandbar {
+        height: auto;
+        padding: 12px 0;
+    }
+
+    .brandbar-inner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .brand-tagline {
+        white-space: normal;
+    }
+
+    .metric-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 560px) {
+    .page {
+        padding: 16px;
+    }
+
+    .panel {
+        padding: 16px;
+    }
+
+    .segmented {
+        grid-template-columns: 1fr;
+    }
+
+    .segmented-btn + .segmented-btn {
+        border-left: 0;
+        border-top: 1px solid var(--hairline);
+    }
+
+    .pipe-card {
+        flex: 1 1 100%;
+    }
+
+    /* Narrow screens: stack the finding head so the location cannot collide
+       with the agent name, and let long locations wrap instead of clipping. */
+    .finding-head {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    .finding-location {
+        margin-left: 0;
+        white-space: normal;
+        word-break: break-word;
+    }
+}
+
+/* ==== Prompt editor (per-node accordion) ==== */
+
+.canvas-inspector {
+    color: var(--ink);
+}
+
+.canvas-inspector-head {
+    font-family: var(--font-serif);
+    font-size: 16px;
+    margin: 16px 0 4px;
+}
+
+.canvas-inspector-meta {
+    font-size: 12px;
+    color: var(--ink-muted);
+    margin-bottom: 12px;
+}
+
+.canvas-inspector-empty {
+    color: var(--ink-muted);
+    padding: 16px 0;
+}
+
+.canvas-inspector-status {
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--ink-muted);
+}
+
+.canvas-field-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.canvas-field-row .canvas-field {
+    flex: 1 1 120px;
+    min-width: 0;
+}
+
+.canvas-field {
+    margin-bottom: 12px;
+}
+
+.canvas-field-label {
+    display: block;
+    font-size: 12px;
+    color: var(--ink-muted);
+    margin-bottom: 4px;
+}
+
+.canvas-step-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 14px 0 4px;
+}
+
+.canvas-field.is-prompt {
+    margin-top: 8px;
+}
+
+.canvas-inp {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 40px;
+    padding: 6px 8px;
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--ink);
+}
+
+.canvas-ta {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 160px;
+    padding: 8px;
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    font-family: monospace;
+    font-size: 12px;
+    color: var(--ink);
+    resize: vertical;
+}
+
+.canvas-char-count {
+    font-size: 12px;
+    color: var(--ink-muted);
+    margin-bottom: 12px;
+}
+
+.canvas-save-btn {
+    min-height: 44px;
+    padding: 0 20px;
+    background: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    color: var(--paper);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.canvas-save-btn:hover {
+    background: var(--accent-dark);
+    border-color: var(--accent-dark);
+}
+
+.canvas-refs {
+    margin: 12px 0;
+    padding: 10px 12px;
+    background: var(--paper);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+}
+
+.canvas-ref-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 2px 0;
+}
+
+.canvas-ref-title {
+    font-size: 13px;
+    color: var(--ink);
+}
+
+.canvas-ref-muted {
+    font-size: 13px;
+    color: var(--ink-muted);
+}
+
+.canvas-ref-state {
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.canvas-ref-state.is-loaded {
+    color: var(--ok);
+}
+
+.canvas-ref-state.is-notloaded {
+    color: var(--warn);
+}

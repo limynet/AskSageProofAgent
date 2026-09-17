@@ -1,0 +1,35 @@
+# AskSage Proof Agent - repository ignore rules
+
+# Virtual environment and Python caches
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+
+# Heavy / machine-local artifacts (large binaries and vendored sources stay
+# out of the repo; see DEPLOY.md for how the engine image is built)
+models/
+llama.cpp/
+_chrome_tmp/
+_edge_tmp/
+.omo/
+.dsh-project-summaries/
+
+# Secrets and runtime state
+configs/.env
+configs/history/
+*.log
+
+# User-uploaded documents and reference manuals are not source: keep only the
+# folder's README in version control
+data/reference/*
+!data/reference/README.txt
+
+# Scratch / generated
+ui-*.yml
+*.tmp
+# Local scratch env and stray nested duplicate folder
+.env
+AskSageProofAgent_Local/
+

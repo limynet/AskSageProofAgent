@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "outlets": [
+    {
+      "key": "local",
+      "title": "Local (Bonsai)",
+      "base_url_env": "LOCAL_API_BASE",
+      "base_url_default": "http://localhost:8080/v1",
+      "model_env": "LOCAL_MODEL",
+      "model_default": "bonsai-1.7b",
+      "api_key_env": "LOCAL_API_KEY",
+      "api_key_default": "sk-local"
+    },
+    {
+      "key": "custom",
+      "title": "Custom API",
+      "base_url_env": "CUSTOM_API_BASE",
+      "base_url_default": "",
+      "model_env": "CUSTOM_MODEL",
+      "model_default": "",
+      "api_key_env": "CUSTOM_API_KEY",
+      "api_key_default": ""
+    }
+  ]
+}

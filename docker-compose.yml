@@ -1,0 +1,83 @@
+# AskSage Proof Agent - Bonsai engine + Dash app.
+#
+# Two services:
+#   maple-llm  - the LLM engine (llama-server built from the deepgrove
+#                llama.cpp fork, image "maple-llm-server"), OpenAI-compatible
+#                API on port 8080, serving the Bonsai-1.7B Q1_0 GGUF.
+#   dash-app   - the Dash review app (dashboard.py) on gunicorn, port 8501,
+#                wired to the local engine.
+#
+# The Bonsai GGUF lives on the host under ./models and is bind-mounted
+# read-only into the engine container at /models.
+
+services:
+  maple-llm:
+    image: maple-llm-server:latest
+    container_name: maple-llm
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./models:/models:ro
+    command:
+      - -m
+      - /models/Bonsai-1.7B-Q1_0.gguf
+      - --alias
+      - bonsai-1.7b
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8080"
+      - -c
+      - "16384"
+      - -t
+      - "8"
+      - --jinja
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - ask-sage-network
+
+  dash-app:
+    build:
+      context: .
+      dockerfile: Dockerfile.app
+    image: ask-sage-proof-agent:latest
+    container_name: ask-sage-dash
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/app/data
+      # Bind-mount configs so prompt saves, reference uploads, and version
+      # history persist on the host across container rebuilds.
+      - ./configs:/app/configs
+    environment:
+      - PORT=8501
+      - LOCAL_API_BASE=http://maple-llm:8080/v1
+      - LOCAL_MODEL=bonsai-1.7b
+      - REVIEW_ENGINE=pub_pipeline
+      - LLM_CONNECT_TIMEOUT=8
+      - LLM_REQUEST_TIMEOUT=900
+      # Optional: a user-configured OpenAI-compatible fallback outlet.
+      - CUSTOM_API_BASE=${CUSTOM_API_BASE:-}
+      - CUSTOM_MODEL=${CUSTOM_MODEL:-}
+      - CUSTOM_API_KEY=${CUSTOM_API_KEY:-}
+    depends_on:
+      maple-llm:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - ask-sage-network
+
+networks:
+  ask-sage-network:
+    driver: bridge

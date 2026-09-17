@@ -1,0 +1,35 @@
+# AskSage Proof Agent - build-context exclusions.
+# Only what Dockerfile.app COPYs is needed in the image: requirements.txt,
+# dashboard.py, wsgi.py, app.py, src/, configs/, assets/.
+# The rest (models, llama.cpp source, venv, tests, docs) would otherwise be
+# sent to the Docker daemon as build context.
+
+# Heavy / machine-specific
+.venv/
+llama.cpp/
+models/
+data/
+.git/
+
+# Python noise
+__pycache__/
+.pytest_cache/
+*.pyc
+
+# Local scratch
+_chrome_tmp/
+_edge_tmp/
+.omo/
+.dsh-project-summaries/
+
+# Not copied by the image; excluded to keep context small
+docs/
+tests/
+tools/
+*.md
+*.ps1
+*.sh
+.env
+test_*.py
+qa_probe.py
+Modelfile

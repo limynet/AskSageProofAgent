@@ -1,0 +1,8 @@
+FROM https://huggingface.co/prism-ml/Bonsai-1.7B-gguf/resolve/main/bonsai-1.7b.Q5_K_M.gguf
+
+PARAMETER num_ctx 4096
+PARAMETER temperature 0.7
+PARAMETER top_p 0.9
+PARAMETER repeat_penalty 1.1
+
+SYSTEM You are a helpful AI assistant specializing in document review and academic writing support.

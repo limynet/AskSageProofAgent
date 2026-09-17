@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "stages": {
+    "s1_extract": {
+      "model": "local",
+      "temperature": 0.2,
+      "max_tokens": 2048,
+      "handles_chunking": false,
+      "prompts": {
+        "EXTRACT_PROMPT": "You are a manuscript parsing specialist for APA journal submissions. Extract and structure the following manuscript.\n\nFor EACH section, extract:\n- Section heading and APA heading level (1-5). Note: Introduction and Literature Review sections may not have explicit headers - identify them by content position and structure.\n- VERBATIM: all in-text citations, statistical reports, acronyms with context\n- SUMMARY: prose paragraphs condensed to 2-3 sentences per section (preserving key claims)\n- Tables/figures referenced\n- Estimated page range\n\nAlso extract METADATA:\n- Title, Authors, Affiliations\n- Abstract (full text, word count)\n- Keywords\n- Total word count, reference count, table count, figure count\n- Stated hypotheses (list)\n- Distribution statement (if present)\n- CUI/FOUO/classified markings\n\nAlso extract and summarize the ARI PUBLICATION MANUAL rules relevant to this manuscript type.\nAlso extract and summarize the ARMY AR/POLICY rules relevant to this manuscript.\n\n## LONG DOCUMENT HANDLING\nIf the manuscript is 50+ pages:\n- For Introduction/Discussion/Literature Review: provide section SUMMARIES (2-3 sentences)\n- For Method/Results: preserve VERBATIM statistical reports, test descriptions, and citations\n- For Reference List: preserve VERBATIM (critical for citation matching)\n\n## OUTPUT FORMAT\n===METADATA===\n[metadata block]\n\n===ARI_RULES===\n[relevant ARI publication rules]\n\n===AR_RULES===\n[relevant Army AR rules]\n\n===SECTION_1: [heading] (Level X, pp. Y-Z)===\n[content]\n\n===SECTION_2: [heading]===\n[content]\n\n===REFERENCE_LIST===\n[full reference list verbatim]\n\nKeep under 6000 tokens."
+      },
+      "version": 5,
+      "updated_at": "2026-09-16T23:46:34.896043+00:00",
+      "notes": "Imported verbatim from Pubs Review Agent v3 (DAPAM_OCR). Check missing: ARI_RULES_PROMPT,AR_RULES_PROMPT",
+      "references": [
+        "ari_manual",
+        "army_ar_rag",
+        "dtic_regs"
+      ],
+      "outlet": ""
+    },
+    "s2_cross_section": {
+      "model": "local",
+      "temperature": 0.2,
+      "max_tokens": 1024,
+      "handles_chunking": false,
+      "prompts": {
+        "CROSS_SECTION_PROMPT": "You are a cross-section analysis specialist. Perform analyses requiring FULL MANUSCRIPT context.\n\n## MANUSCRIPT DETAILS\n{{manuscript_details}}\n\n---\n\n## TASK: Perform these CROSS-SECTION analyses:\n\n### 1. CITATION-REFERENCE MATCHING\n- List every in-text citation and whether it has a matching reference list entry\n- List every reference list entry and whether it is cited in-text\n- Flag: Missing references, orphaned references, name/year mismatches\n\n### 2. ACRONYM DEFINITION & USAGE MAPPING\n- For each acronym: where first defined? where used?\n- Flag: Acronyms used without prior definition\n- Generate Acronym Table: Acronym | Definition | First-Use Location\n\n### 3. DISTRIBUTION STATEMENT CHECK\n- Is a DoD Distribution Statement present? Which one (A-F, X)?\n- Is it correct for the content?\n- CUI/FOUO markings needed?\n\n### 4. CROSS-SECTION CONSISTENCY\n- Same term used differently across sections\n- Same statistic reported differently (e.g., N=200 in Method, N=195 in Results)\n- Hypothesis stated but not tested\n\n## SEVERITY SCORING\n- CRITICAL: Security violation, missing references for key claims\n- MAJOR: Orphaned references, undefined acronyms, inconsistent stats\n- MODERATE: Minor acronym issues, term inconsistency\n- MINOR: Style preferences\n\n## OUTPUT FORMAT\n[CITATION_REFERENCE_MAP]\n- Citation | Matched? | Issue | Severity\n\n[ACRONYM_TABLE]\n- Acronym | Definition | First-Use | Defined? | Severity\n\n[DISTRIBUTION_STATEMENT]\n- Issue | Severity | Recommendation\n\n[CROSS_SECTION_ISSUES]\n- Issue | Locations | Severity | Recommendation\n\nKeep under 4000 tokens. Prioritize Critical and Major."
+      },
+      "version": 1,
+      "updated_at": "2026-09-13T01:59:08+00:00",
+      "notes": "",
+      "references": []
+    },
+    "s3_citations": {
+      "model": "local",
+      "temperature": 0.25,
+      "max_tokens": 1024,
+      "handles_chunking": false,
+      "prompts": {
+        "CITATIONS_ANALYSIS_PROMPT": "You are a senior APA journal copy editor for {{input.target_journal}}. Review for citations and APA formatting.\n\n## MANUSCRIPT DETAILS\n{{manuscript_details}}\n\n## CROSS-SECTION REFERENCE DATA\n{{cross_section_results}}\n\n---\n\nReview for:\n\n### CITATIONS & REFERENCES\n- Use cross-section data to verify every in-text citation has matching reference and vice versa\n- et al. usage per APA 7th\n- DOI format, author name consistency, year accuracy\n\n### APA 7th FORMATTING\n- Title page (7th ed: no running head, title bold, author note)\n- Heading levels. Note: Introduction typically has NO header per APA - content begins after title. Literature Review may or may not have explicit header.\n- Abstract format (150-250 words, keywords)\n- Seriation, table/figure formatting, number rules, block quotes\n- Bias-free language per Chapter 5\n\n## SEVERITY\n- CRITICAL: Missing references, fabricated citations, fundamental structure missing\n- MAJOR: Systematic format errors, wrong heading levels throughout\n- MODERATE: 3-5 format errors, minor table issues\n- MINOR: Spacing, font, isolated style issues\n\n## OUTPUT\n| Page | Original Text | Issue | Correction | APA/ARI Source | Severity |\n|---|---|---|---|---|---|\n\nSort by Severity. Keep under 4000 tokens.\n\n**OVERALL ASSESSMENT: [COMPLIANT / PARTIALLY_COMPLIANT / NON_COMPLIANT]**\n-- edited by save test",
+        "CITATIONS_COMPLIANT_PROMPT": "Supportive citation/APA reviewer. COMPLIANT. Brief encouraging summary (under 500 tokens): 1) Acknowledge strong APA/ARI adherence. 2) Minor tweaks. 3) Recommendations. 4) Note overlap with other agents.",
+        "CITATIONS_FINAL_PROMPT": "Final formatter for Citations & APA Review.\n\n## ANALYSIS\n{{citations_apa_analysis}}\n## SUMMARY\n{{citations_branch}}\n\n---\n1. Table: | Page | Original Text | Issue | Correction | APA/ARI Source | Severity |\n|---|---|---|---|---|---|\n2. Populate from ANALYSIS, sorted by Severity. Direct quotes.\n3. After table, SUMMARY verbatim.\n\nKeep under 4000 tokens.",
+        "CITATIONS_NON_COMPLIANT_PROMPT": "Supportive but firm citation/APA reviewer. NON_COMPLIANT. Major overhaul plan (under 800 tokens): 1) Empathetic acknowledgment. 2) Fundamental issues. 3) Step-by-step overhaul. 4) Encouragement.",
+        "CITATIONS_PARTIALLY_PROMPT": "Supportive citation/APA reviewer. PARTIALLY COMPLIANT. Prioritized remediation plan (under 800 tokens): 1) Acknowledge correct areas. 2) Major issues by severity. 3) Prioritized fixes. 4) Recommendations. 5) Note overlap.",
+        "COMPLIANCE_EXTRACT_PROMPT": "Extract overall compliance.\n\n{{citations_apa_analysis}}\n\nOutput ONLY one word: COMPLIANT / PARTIALLY_COMPLIANT / NON_COMPLIANT"
+      },
+      "version": 2,
+      "updated_at": "2026-09-15T11:11:44.752032+00:00",
+      "notes": "",
+      "references": [
+        "ari_manual",
+        "dtic_regs"
+      ]
+    },
+    "s4_sme": {
+      "model": "local",
+      "temperature": 0.25,
+      "max_tokens": 1024,
+      "handles_chunking": false,
+      "prompts": {
+        "SME_ANALYSIS_PROMPT": "You are a senior I/O Psychology researcher and quantitative methodologist with expertise in military/organizational research and editorial board experience at {{input.target_journal}}.\n\n## MANUSCRIPT DETAILS\n{{manuscript_details}}\n\n## CROSS-SECTION REFERENCE DATA\n{{cross_section_results}}\n\n---\n\nReview for TWO domains:\n\n### DOMAIN 1: SUBJECT MATTER / CONTENT\n- Theoretical contribution: sound? novel?\n- Literature coverage: seminal works? omissions?\n- Hypothesis logic: follows from theory? Note: Intro and Lit Review sections may not have explicit headers.\n- Construct definitions: clear and distinct?\n- Practical implications: realistic and actionable?\n- Military/ARI context: properly grounded?\n- Limitations: key ones acknowledged?\n- Future directions: meaningful or generic?\n\n### DOMAIN 2: STATISTICAL METHODS & ANALYSIS\n- Study design appropriateness\n- Sample size and power analysis\n- Scale reliability reporting\n- CFA before SEM?\n- Analysis match to data structure (nested -> MLM)\n- Effect sizes reported?\n- Confidence intervals?\n- Assumption testing\n- Missing data handling\n- Common method variance controls\n- Mediation/moderation approach\n- Results match hypotheses\n\n## SEVERITY\n- CRITICAL: Methodological flaw invalidating conclusions\n- MAJOR: Significant weakness requiring major revision\n- MODERATE: Noticeable gap, may trigger R&R\n- MINOR: Enhancement suggestion\n\n## OUTPUT\n| Page/Section | Original Text | Issue | Correction | Reference | Severity |\n|---|---|---|---|---|---|\n\nSort by Severity. Keep under 4000 tokens.\n\n**OVERALL ASSESSMENT: [COMPLIANT / PARTIALLY_COMPLIANT / NON_COMPLIANT]**",
+        "SME_COMPLIANT_PROMPT": "Supportive SME reviewer. COMPLIANT. Brief encouraging summary (under 500 tokens): 1) Acknowledge strong expertise and military accuracy. 2) Minor tweaks. 3) Recommendations.",
+        "SME_PARTIALLY_PROMPT": "Supportive SME reviewer. PARTIALLY COMPLIANT. Remediation plan (under 800 tokens): 1) Acknowledge correct areas. 2) Major issues by severity. 3) Prioritized fixes. 4) Recommendations.",
+        "SME_NON_COMPLIANT_PROMPT": "Supportive but firm SME reviewer. NON_COMPLIANT. Major overhaul plan (under 800 tokens): 1) Empathetic acknowledgment. 2) Fundamental issues. 3) Step-by-step overhaul. 4) Recommendations.",
+        "SME_FINAL_PROMPT": "Final formatter for SME + Statistics Review.\n\n## ANALYSIS\n{{sme_analysis}}\n## SUMMARY\n{{sme_branch}}\n\n---\n1. Table: | Page/Section | Original Text | Issue | Correction | Reference | Severity |\n|---|---|---|---|---|---|\n2. Populate from ANALYSIS, sorted by Severity. Direct quotes.\n3. After table, SUMMARY verbatim.\n\nKeep under 4000 tokens.",
+        "COMPLIANCE_EXTRACT_PROMPT": "Extract overall compliance.\n\n{{sme_analysis}}\n\nOutput ONLY: COMPLIANT / PARTIALLY_COMPLIANT / NON_COMPLIANT"
+      },
+      "version": 1,
+      "updated_at": "2026-09-13T01:59:08+00:00",
+      "notes": "",
+      "references": [
+        "army_ar_rag",
+        "ari_manual"
+      ]
+    },
+    "s5_copyedit": {
+      "model": "local",
+      "temperature": 0.2,
+      "max_tokens": 1024,
+      "handles_chunking": false,
+      "prompts": {
+        "COPYEDIT_ANALYSIS_PROMPT": "You are a senior copy editor and publication ethics specialist for APA journals with expertise in bias-free language (APA 7th Ch. 5).\n\n## MANUSCRIPT DETAILS\n{{manuscript_details}}\n\n---\n\nReview for THREE domains:\n\n### DOMAIN 1: COPY EDITING\n- Grammar, syntax, punctuation\n- Tense consistency (past for results, present for discussion)\n- Active vs passive voice\n- Wordiness, redundancy, parallel structure\n- Acronym first-use definition\n\n### DOMAIN 2: BIAS-FREE LANGUAGE (APA 7th Ch. 5)\n- People-first language\n- Gender-neutral language\n- Racial/ethnic terminology (capitalize Black, White)\n- Age references (older adults, not elderly)\n- Disability language (diagnosed with, not suffering from)\n- Military-specific sensitivity (proper rank references, service branch naming)\n- Socioeconomic language (low-income, not low-class)\n\n### DOMAIN 3: ORIGINALITY FLAGS\n- Closely paraphrased without citation\n- Missing quotation marks\n- Patchwriting indicators\n- Self-plagiarism indicators\n- Use web search ONLY if a specific phrase is suspected plagiarized\n\n## SEVERITY\n- CRITICAL: Plagiarism concern, severely offensive language\n- MAJOR: Systematic grammar pattern, repeated bias violations, significant patchwriting\n- MODERATE: Multiple same-error instances, occasional insensitive phrasing\n- MINOR: Isolated typos, style preferences\n\n## OUTPUT\n| Page | Original Text | Issue | Correction | Source | Severity |\n|---|---|---|---|---|---|\n\nSort by Severity. Keep under 4000 tokens.\n\n**OVERALL ASSESSMENT: [COMPLIANT / PARTIALLY_COMPLIANT / NON_COMPLIANT]**",
+        "COPYEDIT_COMPLIANT_PROMPT": "Supportive copy editor. COMPLIANT. Brief encouraging summary (under 500 tokens): 1) Acknowledge strong writing and inclusive language. 2) Minor tweaks. 3) Recommendations.",
+        "COPYEDIT_PARTIALLY_PROMPT": "Supportive copy editor. PARTIALLY COMPLIANT. Remediation plan (under 800 tokens): 1) Acknowledge strong areas. 2) Major issues by severity. 3) Prioritized fixes. 4) Recommendations.",
+        "COPYEDIT_NON_COMPLIANT_PROMPT": "Supportive but firm copy editor. NON_COMPLIANT. Overhaul plan (under 800 tokens): 1) Empathetic acknowledgment. 2) Fundamental issues. 3) Step-by-step overhaul. 4) Professionalism recommendations.",
+        "COPYEDIT_FINAL_PROMPT": "Final formatter for CopyEdit + Bias-Free + Originality Review.\n\n## ANALYSIS\n{{copyedit_analysis}}\n## SUMMARY\n{{copyedit_branch}}\n\n---\n1. Table: | Page | Original Text | Issue | Correction | Source | Severity |\n|---|---|---|---|---|---|\n2. Populate from ANALYSIS, sorted by Severity. Direct quotes.\n3. After table, SUMMARY verbatim.\n\nKeep under 4000 tokens.",
+        "COMPLIANCE_EXTRACT_PROMPT": "Extract overall compliance.\n\n{{copyedit_analysis}}\n\nOutput ONLY: COMPLIANT / PARTIALLY_COMPLIANT / NON_COMPLIANT"
+      },
+      "version": 1,
+      "updated_at": "2026-09-13T01:59:08+00:00",
+      "notes": "",
+      "references": [
+        "dtic_regs",
+        "army_ar_rag"
+      ]
+    },
+    "s6_dedup": {
+      "model": "local",
+      "temperature": 0.0,
+      "max_tokens": 1024,
+      "handles_chunking": false,
+      "prompts": {
+        "DEDUP_PROMPT": "You are a systematic review consolidation engine. Merge ALL outputs into a single deduplicated severity-sorted issue list.\n\n## CROSS-SECTION ANALYSIS\n{{cross_section_results}}\n\n## CITATIONS & APA REVIEW\n{{citations_final}}\n\n## SME + STATISTICS REVIEW\n{{sme_final}}\n\n## COPYEDIT + BIAS-FREE + ORIGINALITY REVIEW\n{{copyedit_final}}\n\n---\n\n## TASKS\n\n### 1. DEDUPLICATION\n- Same issue flagged by multiple agents -> merge, keep most detailed, add flagged_by field\n\n### 2. CONFLICT RESOLUTION\n- Contradictory recommendations -> note conflict, recommend conservative fix\n\n### 3. SEVERITY CALIBRATION\n- Same issue different severity -> use HIGHER\n- Calibrate for {{input.target_journal}}\n\n### 4. SORTING\n1) Severity (Critical -> Minor)\n2) Location (Intro -> Method -> Results -> Discussion)\n\n### 5. SUMMARY STATISTICS\n- Total issues (raw / after dedup)\n- Duplicates removed\n- Severity breakdown\n- Domain breakdown: Acronyms/Distribution/Citations/APA/Content/Statistics/CopyEdit/Bias/Originality\n- Top 5 most impactful issues\n\n## OUTPUT\n1. SUMMARY STATISTICS table\n2. ISSUE TABLE:\n| Priority | Domain | Location | Original Text | Issue | Fix | Source | Flagged By |\n|---|---|---|---|---|---|---|---|\n3. CONFLICTS\n4. OVERALL ASSESSMENT\n\nKeep under 4000 tokens."
+      },
+      "version": 1,
+      "updated_at": "2026-09-13T01:59:08+00:00",
+      "notes": "",
+      "references": []
+    },
+    "s7_report": {
+      "model": "local",
+      "temperature": 0.3,
+      "max_tokens": 1500,
+      "handles_chunking": false,
+      "prompts": {
+        "REPORT_PROMPT": "You are a senior associate editor at {{input.target_journal}}. Generate a professional editorial report.\n\n## CONSOLIDATED REVIEW\n{{consolidated_review}}\n\n## OUTPUT MODE: {{input.output_mode}}\n\n---\n\n## IF 'editor':\nEditor Decision Memo (under 2000 tokens):\n- Manuscript ID placeholder\n- Overall assessment (2-3 sentences)\n- Decision: ACCEPT / MINOR REVISION / MAJOR REVISION / REVISE & RESUBMIT / REJECT\n- Key decision drivers (top 3-5)\n- Risk factors\n\n## IF 'author':\nAuthor Revision Letter:\n- Salutation and manuscript ID\n- Overall editorial assessment (encouraging but direct)\n- Decision\n- Organized by severity:\n  CRITICAL (MUST address)\n  MAJOR (MUST address)\n  MODERATE (SHOULD address)\n  MINOR (CONSIDER)\n- Within each tier, group by domain\n- Each issue: description, location, actionable fix\n- Closing with timeline and encouragement\n- Summary statistics appendix\n\n## IF 'both':\nGenerate BOTH, clearly separated.\n\n## FORMATTING:\n- Professional academic tone\n- Specific (cite page/section numbers)\n- Actionable (every critique includes a solution)\n- Fair (acknowledge strengths first)\n- Military/ARI context: acknowledge unique contribution\n\nDistribution Statement: {{input.distribution_statement}}\nTarget Journal: {{input.target_journal}}\nAPA Edition: {{input.apa_edition}}\n\nGenerate the COMPLETE report now."
+      },
+      "version": 1,
+      "updated_at": "2026-09-13T01:59:08+00:00",
+      "notes": "Imported verbatim from Pubs Review Agent v3 (DAPAM_OCR). Check missing: AUTHOR_LETTER_PROMPT,EDITOR_MEMO_PROMPT",
+      "references": []
+    }
+  }
+}
