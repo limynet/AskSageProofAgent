@@ -55,6 +55,9 @@ services:
       # Bind-mount configs so prompt saves, reference uploads, and version
       # history persist on the host across container rebuilds.
       - ./configs:/app/configs
+      # Bind-mount secrets so API keys (gitignored) are read without being
+      # baked into the image. Keys never enter the image layer.
+      - ./secrets:/app/secrets
     environment:
       - PORT=8501
       - LOCAL_API_BASE=http://maple-llm:8080/v1

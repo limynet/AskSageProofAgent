@@ -33,3 +33,7 @@ ui-*.yml
 .env
 AskSageProofAgent_Local/
 
+# Local API keys - never commit
+secrets/*
+!secrets/README.txt
+

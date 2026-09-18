@@ -110,7 +110,43 @@ configs/ is bind-mounted after an upgrade, first rescue a previous version:
 Then hard-refresh the browser (Ctrl+Shift+R) so no stale page is cached.
 
 ----------------------------------------------------------------------------
-7. Publishing a new release (maintainer only)
+7. Custom API outlets (e.g., GenAI-MIL / api.genai.mil)
+----------------------------------------------------------------------------
+
+Each review node can call its own OpenAI-compatible API entry point. Named
+outlets live in configs/outlets.json; the GenAI-MIL (IL5) outlet ships
+preconfigured.
+
+1. Store your API key locally (never commit it). Use the helper, which
+   writes it into secrets/outlets.env:
+
+       .\scripts\use_genai_mil.ps1
+
+   Or write the file yourself:
+
+       # secrets/outlets.env
+       GENAI_MIL_API_KEY=your-key
+       GENAI_MIL_MODEL=gemini-2.5-flash
+
+   The secrets/ folder is gitignored; keys are never committed or shipped.
+2. Refresh the dashboard browser tab (configs/ and secrets/ are bind-
+   mounted into the container - no rebuild needed).
+3. In any node editor, set Outlet = GenAI-MIL (IL5) and Save. Unselected
+   nodes keep the local Bonsai engine.
+4. Run the review: the chosen nodes call api.genai.mil.
+
+Notes:
+- The key auto-locks every 8 hours. When locked, the stage error shows an
+  unlock_url; visit it (or unlock on the API Keys page) to re-enable.
+- IL5 / CONTROLLED UNCLASSIFIED INFORMATION (CUI) - no PII/PHI. Only send
+  content you are authorized to push, through approved systems.
+- Reachability: api.genai.mil may require an approved network path. Verify
+  with: curl.exe -s -H "Authorization: Bearer <key>" https://api.genai.mil/v1/models
+- The Engine panel Test connection probes the default engine, not per-node
+  outlets; a down outlet fails that stage loudly with the API message.
+
+----------------------------------------------------------------------------
+8. Publishing a new release (maintainer only)
 ----------------------------------------------------------------------------
 
 1. Bump the version in VERSION (and this guide if it changed).

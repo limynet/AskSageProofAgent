@@ -16,7 +16,9 @@ secrets never live in the JSON:
     }
 
 Resolution order per field: environment variable first, then the JSON
-default. build_client(key) returns a client exposing chat_completion(...)
+default. Before resolving, local keys are loaded once from every *.env file
+under secrets/ (python-dotenv, override=False so the process environment
+still wins). build_client(key) returns a client exposing chat_completion(...)
 with the same shape llm_client.LLMClient exposes, so
 pub_pipeline.ProviderAdapter wraps it unchanged. Unknown keys return None
 and the caller falls back to the run-wide client.
@@ -29,6 +31,35 @@ import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 OUTLETS_PATH = os.path.join(BASE_DIR, "..", "configs", "outlets.json")
+SECRETS_DIR = os.path.join(BASE_DIR, "..", "secrets")
+
+_secrets_loaded = False
+
+
+def _load_secrets():
+    """Load local outlet keys from secrets/*.env once (idempotent).
+
+    Keys live in the ignored secrets/ folder so they never enter the repo.
+    Real environment variables are NOT overridden: python-dotenv's
+    override=False keeps process-level values (e.g. injected by Docker)
+    winning over the file.
+    """
+    global _secrets_loaded
+    if _secrets_loaded:
+        return
+    _secrets_loaded = True
+    try:
+        from dotenv import load_dotenv
+    except Exception:  # noqa: BLE001 - missing dotenv: rely on real env only
+        return
+    if not os.path.isdir(SECRETS_DIR):
+        return
+    try:
+        for name in sorted(os.listdir(SECRETS_DIR)):
+            if name.endswith(".env"):
+                load_dotenv(os.path.join(SECRETS_DIR, name), override=False)
+    except OSError:
+        pass
 
 
 def load_outlets():
@@ -65,7 +96,9 @@ def resolve_outlet(key):
 
     Returns {"key", "title", "base_url", "model", "api_key"} with the
     environment variable winning over the JSON default for every field.
+    Local secrets under secrets/ are loaded first (see _load_secrets).
     """
+    _load_secrets()
     for outlet in (load_outlets().get("outlets") or []):
         if outlet.get("key") != key:
             continue

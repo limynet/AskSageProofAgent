@@ -17,13 +17,24 @@ import outlets  # noqa: E402
 
 
 class TestRegistry(unittest.TestCase):
-    def test_default_registry_has_two_outlets(self):
+    def test_default_registry_has_three_outlets(self):
         keys = outlets.outlet_keys()
-        self.assertEqual(keys, ["local", "custom"])
+        self.assertEqual(keys, ["local", "custom", "genai-mil"])
 
     def test_titles_fall_back_to_key(self):
         titles = outlets.outlet_titles()
         self.assertEqual(titles["local"], "Local (Bonsai)")
+
+    def test_genai_mil_entry_has_no_secret(self):
+        cfg = outlets.resolve_outlet("genai-mil")
+        # The registry only names env vars; no key literal in the JSON.
+        self.assertEqual(cfg["base_url"], "https://api.genai.mil/v1")
+        self.assertEqual(cfg["api_key"], "")
+        # The repo file must not contain a key value.
+        with open(outlets.OUTLETS_PATH, encoding="utf-8") as f:
+            raw = f.read()
+        self.assertNotIn("api.genai.mil/v1\n      \"api_key_default\": \"sk", raw)
+        self.assertNotIn("api_key_default\": \"wise", raw)
 
 
 class TestResolve(unittest.TestCase):
@@ -42,6 +53,40 @@ class TestResolve(unittest.TestCase):
     def test_unknown_key_returns_none(self):
         self.assertIsNone(outlets.resolve_outlet("no-such-outlet"))
         self.assertIsNone(outlets.build_client("no-such-outlet"))
+
+
+class TestSecretsLoader(unittest.TestCase):
+    """Keys stored in a temp secrets/ folder are picked up by resolve_outlet,
+    and real environment variables still win."""
+
+    def _patch_secrets(self):
+        import tempfile
+
+        tmp = tempfile.mkdtemp()
+        with open(os.path.join(tmp, "outlets.env"), "w", encoding="utf-8") as f:
+            f.write("GENAI_MIL_API_KEY=secret-abc\nGENAI_MIL_MODEL=gemini-2.5-flash\n")
+        self._orig_dir = outlets.SECRETS_DIR
+        self._orig_flag = outlets._secrets_loaded
+        outlets.SECRETS_DIR = tmp
+        outlets._secrets_loaded = False
+
+    def tearDown(self):
+        outlets.SECRETS_DIR = getattr(self, "_orig_dir", outlets.SECRETS_DIR)
+        outlets._secrets_loaded = getattr(self, "_orig_flag", False)
+
+    def test_secret_loaded_from_file(self):
+        self._patch_secrets()
+        env = {k: v for k, v in os.environ.items()
+               if k not in ("GENAI_MIL_API_KEY", "GENAI_MIL_MODEL")}
+        with mock.patch.dict(os.environ, env, clear=True):
+            cfg = outlets.resolve_outlet("genai-mil")
+        self.assertEqual(cfg["api_key"], "secret-abc")
+
+    def test_real_env_wins_over_secrets_file(self):
+        self._patch_secrets()
+        with mock.patch.dict(os.environ, {"GENAI_MIL_API_KEY": "env-wins"}):
+            cfg = outlets.resolve_outlet("genai-mil")
+        self.assertEqual(cfg["api_key"], "env-wins")
 
 
 class TestBuildClient(unittest.TestCase):

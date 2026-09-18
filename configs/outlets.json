@@ -20,6 +20,16 @@
       "model_default": "",
       "api_key_env": "CUSTOM_API_KEY",
       "api_key_default": ""
+    },
+    {
+      "key": "genai-mil",
+      "title": "GenAI-MIL (IL5)",
+      "base_url_env": "GENAI_MIL_BASE_URL",
+      "base_url_default": "https://api.genai.mil/v1",
+      "model_env": "GENAI_MIL_MODEL",
+      "model_default": "gemini-2.5-flash",
+      "api_key_env": "GENAI_MIL_API_KEY",
+      "api_key_default": ""
     }
   ]
 }
